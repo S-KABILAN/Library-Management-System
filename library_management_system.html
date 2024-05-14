@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #585656da;
+            background-image:url('Library.jpg');
+            background-repeat: no-repeat;
+            background-size: cover;
+            
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: left;
+            border-radius: 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 3%;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input[type="text"],
+        input[type="number"] {
+            width: calc(100% - 10px);
+            padding: 8px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        #searchInput {
+            width: calc(100% - 70px);
+        }
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Library Management System</h1>
+    </header>
+
+    <div class="container">
+        <div class="form-group">
+            <h2>Add New Book</h2>
+            <input type="text" id="title" placeholder="Title" required>
+            <input type="text" id="author" placeholder="Author" required>
+            <input type="number" id="quantity" placeholder="Quantity" min="1" required>
+            <button onclick="addBook()">Add Book</button>
+        </div>
+
+        <div class="form-group">
+            <h2>Search Books</h2>
+            <input type="text" id="searchInput" placeholder="Search...">
+            <button onclick="searchBooks()">Search</button>
+        </div>
+
+        <div id="searchResult">
+            <h2>Search Result</h2>
+            <table id="searchTable">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Quantity</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="searchTableBody">
+                    <!-- Search results will be dynamically added here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="bookList">
+            <h2>Library Inventory</h2>
+            <table id="bookTable">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+                <tbody id="bookTableBody">
+                    <!-- Available books will be dynamically added here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let library = {};
+
+        function addBook() {
+            const title = document.getElementById('title').value.trim();
+            const author = document.getElementById('author').value.trim();
+            const quantity = parseInt(document.getElementById('quantity').value);
+
+            if (title && author && !isNaN(quantity) && quantity > 0) {
+                const bookKey = `${title}_${author}`;
+                if (library.hasOwnProperty(bookKey)) {
+                    library[bookKey].quantity += quantity;
+                } else {
+                    library[bookKey] = { title, author, quantity };
+                }
+                displayBooks();
+                document.getElementById('title').value = '';
+                document.getElementById('author').value = '';
+                document.getElementById('quantity').value = '';
+            } else {
+                alert('Please enter valid book details.');
+            }
+        }
+
+        function searchBooks() {
+            const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+            const searchResult = Object.values(library).filter(book =>
+                book.title.toLowerCase().includes(searchTerm) ||
+                book.author.toLowerCase().includes(searchTerm)
+            );
+            displaySearchResult(searchResult);
+        }
+
+        function displaySearchResult(books) {
+            const tableBody = document.getElementById('searchTableBody');
+            tableBody.innerHTML = '';
+
+            books.forEach(book => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${book.title}</td>
+                    <td>${book.author}</td>
+                    <td>${book.quantity}</td>
+                    <td><button onclick="borrowBook('${book.title}', '${book.author}')">Borrow</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function displayBooks() {
+            const tableBody = document.getElementById('bookTableBody');
+            tableBody.innerHTML = '';
+
+            Object.values(library).forEach(book => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${book.title}</td>
+                    <td>${book.author}</td>
+                    <td>${book.quantity}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function borrowBook(title, author) {
+            const bookKey = `${title}_${author}`;
+            
+            if (library.hasOwnProperty(bookKey) && library[bookKey].quantity > 0) {
+                library[bookKey].quantity--;
+                displaySearchResult(Object.values(library).filter(book =>
+                    book.title.toLowerCase().includes(title.toLowerCase()) &&
+                    book.author.toLowerCase().includes(author.toLowerCase())
+                ));
+                displayBooks();
+            } else {
+                alert(`"${title}" is not available for borrowing.`);
+            }
+        }
+
+        window.onload = function() {
+            displayBooks();
+        };
+    </script>
+</body>
+</html>
